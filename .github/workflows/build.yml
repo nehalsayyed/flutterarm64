@@ -22,7 +22,10 @@ jobs:
 
       - name: Build Ionic project
         run: npm run build
-
+        
+      - name: Add android 
+        run: npm install @capacitor/android
+        
       - name: Install Capacitor Android platform
         run: npx cap add android
 
