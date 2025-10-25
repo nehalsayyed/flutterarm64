@@ -19,11 +19,10 @@ jobs:
         with:
           dotnet-version: '8.0.x' # or your preferred version
 
-      - name: Compile Main.cs
+      - name: Create temporary project
         run: |
-          mkdir build
-          csc -out:build/Main.exe Main.cs
-
-      - name: Run Main.exe
-        run: |
-          mono build/Main.exe
+          dotnet new console -n TempRunApp
+          cd TempRunApp
+          rm Program.cs
+          cp ../Main.cs .
+          dotnet run
