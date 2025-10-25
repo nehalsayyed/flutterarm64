@@ -18,8 +18,8 @@ jobs:
         arch: aarch64
         distro: ubuntu22.04
         run: |
-          sudo apt update
-          sudo apt install -y cmake gcc g++ git
+         apt update
+         apt install -y cmake gcc g++ git
           git clone https://github.com/ptitSeb/box64.git
           mkdir box64/build && cd box64/build
           cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
