@@ -1,32 +1,36 @@
-name: Build Box64 for AArch64
+name: Build and Upload MAUI APK
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build on AArch64
-    runs-on: ubuntu-latest
+    name: Build MAUI Android APK
+    runs-on: windows-latest
 
     steps:
-    - name: Checkout source
-      uses: actions/checkout@v3
+    - name: Clone MAUI demo repository
+      run: git clone https://github.com/dotnet/maui-samples.git
 
-    - name: Build using QEMU AArch64
-      uses: uraimo/run-on-arch-action@v2
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v3
       with:
-        arch: aarch64
-        distro: ubuntu22.04
-        run: |
-         apt update
-         apt install -y cmake gcc g++ git python3 
-          git clone https://github.com/ptitSeb/box64.git
-          mkdir box64/build && cd box64/build
-          cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
-          make -j$(nproc)
+        dotnet-version: '8.0.x' # Adjust to match your MAUI target version
 
-    - name: Upload Box64 binary
+    - name: Install MAUI workloads
+      run: dotnet workload install maui
+
+    - name: Restore dependencies
+      working-directory: ./maui-samples/HelloMaui
+      run: dotnet restore
+
+    - name: Build Android APK
+      working-directory: ./maui-samples/HelloMaui
+      run: dotnet build -f net8.0-android --configuration Release
+
+    - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
-        name: box64-aarch64
-        path: box64/build/box64
+        name: maui-apk
+        path: |
+          maui-samples/HelloMaui/bin/Release/net8.0-android/*.apk
