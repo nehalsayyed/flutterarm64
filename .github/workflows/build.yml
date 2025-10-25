@@ -19,7 +19,7 @@ jobs:
         distro: ubuntu22.04
         run: |
          apt update
-         apt install -y cmake gcc g++ git
+         apt install -y cmake gcc g++ git python3 
           git clone https://github.com/ptitSeb/box64.git
           mkdir box64/build && cd box64/build
           cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
