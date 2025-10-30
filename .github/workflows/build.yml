@@ -1,36 +1,23 @@
-name: Build and Upload MAUI APK
+name: Go
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build MAUI Android APK
-    runs-on: windows-latest
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [ '1.19', '1.20', '1.21.x' ]
 
     steps:
-    - name: Clone MAUI demo repository
-      run: git clone https://github.com/dotnet/maui-samples.git
-
-    - name: Setup .NET SDK
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '8.0.x' # Adjust to match your MAUI target version
-
-    - name: Install MAUI workloads
-      run: dotnet workload install maui
-
-    - name: Restore dependencies
-      working-directory: ./maui-samples/HelloMaui
-      run: dotnet restore
-
-    - name: Build Android APK
-      working-directory: ./maui-samples/HelloMaui
-      run: dotnet build -f net8.0-android --configuration Release
-
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: maui-apk
-        path: |
-          maui-samples/HelloMaui/bin/Release/net8.0-android/*.apk
+      - uses: actions/checkout@v5
+      - name: Setup Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+      # You can test your matrix by printing the current Go version
+      - name: Display Go version
+        run: go version
+        
