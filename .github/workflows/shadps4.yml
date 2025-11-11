@@ -2,25 +2,13 @@ name: Build shadPS4 for ARM64 Linux
 
 on:
   workflow_dispatch:
-
+  
 jobs:
   build-arm64:
     runs-on: ubuntu-latest
-    name: Build on ARM64 Ubuntu
+    name: Build shadPS4 on ARM64
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-
-      - name: Set up QEMU for ARM64
-        uses: docker/setup-qemu-action@v2
-        with:
-          platforms: arm64
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
       - name: Install dependencies
         run: |
           sudo apt update
@@ -29,14 +17,21 @@ jobs:
             libudev-dev libevdev-dev libsdl2-dev libjack-dev libsndio-dev \
             libvulkan-dev vulkan-validationlayers libpng-dev
 
+      - name: Clone shadPS4 repository
+        run: |
+          git clone --recursive https://github.com/shadps4-emu/shadPS4.git
+          cd shadPS4
+
       - name: Configure CMake
+        working-directory: shadPS4
         run: cmake -S . -B build/ -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
 
       - name: Build project
+        working-directory: shadPS4
         run: cmake --build ./build --parallel $(nproc)
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: shadPS4-arm64-binaries
-          path: build/
+          path: shadPS4/build/
