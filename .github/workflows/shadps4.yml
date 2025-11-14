@@ -5,26 +5,24 @@ on:
   
 jobs:
   build-arm64:
-    # Note on ARM64: The 'ubuntu-latest' runner is x86_64. 
-    # To truly build native ARM64 binaries, you would need to use a self-hosted ARM64 runner 
-    # (e.g., runs-on: [self-hosted, linux, arm64]) or set up QEMU for emulation. 
-    # This workflow uses the standard ubuntu-latest runner for simplicity, which typically 
-    # requires cross-compilation toolchains if the target is different from the host.
-    # Assuming standard build-from-source flow for the host architecture.
+    # Note: Using standard ubuntu-latest (x86_64) runner for building, 
+    # which is the current configuration.
     runs-on: ubuntu-latest
     name: Build Zig Compiler
 
     steps:
       - name: Checkout repository
-        # Use the standard checkout action
         uses: actions/checkout@v4
         
       - name: Install build dependencies
-        # Zig relies on Clang/LLVM, CMake, and standard build tools
+        # FIX: Replaced the unavailable 'libllvm-dev' package.
+        # We now install the basic 'llvm' package and ensure we have all core tools 
+        # (clang, lld, cmake) which should pull in the necessary LLVM components 
+        # including the 'llvm-config' utility.
         run: |
           sudo apt update
-          # FIX: Added 'libllvm-dev' to ensure 'llvm-config' utility is installed and available for CMake.
-          sudo apt install -y build-essential clang lld git cmake libllvm-dev
+          # Install core tools, including the main LLVM package for utilities.
+          sudo apt install -y build-essential clang lld git cmake llvm
 
       - name: Clone Zig repository
         run: |
@@ -34,7 +32,7 @@ jobs:
       - name: Configure CMake
         working-directory: zig
         # Configure the build using CMake. Set Release build type.
-        # ZIG_PREBUILT_BOOTSTRAP_NAME=self-hosted is often used for the final build step.
+        # This step failed previously due to missing llvm-config, which should now be fixed.
         run: cmake -S . -B build/ -DCMAKE_BUILD_TYPE=Release -DZIG_PREBUILT_BOOTSTRAP_NAME=self-hosted
 
       - name: Build project
