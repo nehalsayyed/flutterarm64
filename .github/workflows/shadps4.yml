@@ -1,37 +1,55 @@
-name: Build shadPS4 for ARM64 Linux
+name: Build Zig Compiler for ARM64 Linux
 
 on:
   workflow_dispatch:
   
 jobs:
   build-arm64:
+    # Note on ARM64: The 'ubuntu-latest' runner is x86_64. 
+    # To truly build native ARM64 binaries, you would need to use a self-hosted ARM64 runner 
+    # (e.g., runs-on: [self-hosted, linux, arm64]) or set up QEMU for emulation. 
+    # This workflow uses the standard ubuntu-latest runner for simplicity, which typically 
+    # requires cross-compilation toolchains if the target is different from the host.
+    # Assuming standard build-from-source flow for the host architecture.
     runs-on: ubuntu-latest
-    name: Build shadPS4 on ARM64
+    name: Build Zig Compiler
 
     steps:
-      - name: Install dependencies
+      - name: Checkout repository
+        # Use the standard checkout action
+        uses: actions/checkout@v4
+        
+      - name: Install build dependencies
+        # Zig relies on Clang/LLVM, CMake, and standard build tools
         run: |
           sudo apt update
-          sudo apt install -y build-essential clang git cmake libasound2-dev \
-            libpulse-dev libopenal-dev libssl-dev zlib1g-dev libedit-dev \
-            libudev-dev libevdev-dev libsdl2-dev libjack-dev libsndio-dev \
-            libvulkan-dev vulkan-validationlayers libpng-dev
+          sudo apt install -y build-essential clang lld git cmake 
 
-      - name: Clone shadPS4 repository
+      - name: Clone Zig repository
         run: |
-          git clone --recursive https://github.com/shadps4-emu/shadPS4.git
-          cd shadPS4
-
+          # Clone the official Zig repository
+          git clone --recursive https://github.com/ziglang/zig.git
+          
       - name: Configure CMake
-        working-directory: shadPS4
-        run: cmake -S . -B build/ -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+        working-directory: zig
+        # Configure the build using CMake. Set Release build type.
+        # ZIG_PREBUILT_BOOTSTRAP_NAME=self-hosted is often used for the final build step.
+        run: cmake -S . -B build/ -DCMAKE_BUILD_TYPE=Release -DZIG_PREBUILT_BOOTSTRAP_NAME=self-hosted
 
       - name: Build project
-        working-directory: shadPS4
+        working-directory: zig
+        # Run the build using all available CPU cores
         run: cmake --build ./build --parallel $(nproc)
+
+      - name: Verify build (Check Zig Version)
+        working-directory: zig/build/bin
+        run: |
+          echo "Verifying the compiled zig executable..."
+          ./zig version
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: shadPS4-arm64-binaries
-          path: shadPS4/build/
+          name: zig-binaries-arm64-target
+          # The compiled executable and necessary libraries will be under zig/build/
+          path: zig/build/
