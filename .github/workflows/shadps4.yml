@@ -23,7 +23,8 @@ jobs:
         # Zig relies on Clang/LLVM, CMake, and standard build tools
         run: |
           sudo apt update
-          sudo apt install -y build-essential clang lld git cmake 
+          # FIX: Added 'libllvm-dev' to ensure 'llvm-config' utility is installed and available for CMake.
+          sudo apt install -y build-essential clang lld git cmake libllvm-dev
 
       - name: Clone Zig repository
         run: |
