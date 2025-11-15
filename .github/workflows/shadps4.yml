@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Explicitly clone the external repository
+      # Clone the external repository
       - name: Clone arti repo
         run: git clone https://github.com/zydou/arti.git
 
@@ -22,9 +22,16 @@ jobs:
       - name: Add ARM64 target
         run: rustup target add aarch64-unknown-linux-gnu
 
-      # Install cross compiler toolchain
-      - name: Install cross compiler
-        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+      # Install cross compiler + OpenSSL for ARM64
+      - name: Install cross compiler and OpenSSL
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-aarch64-linux-gnu \
+            pkg-config \
+            libssl-dev \
+            libssl-dev:arm64
 
       # Verify Rust version
       - name: Check Rust version
@@ -33,6 +40,10 @@ jobs:
       # Build the project for ARM64
       - name: Build arti (ARM64)
         working-directory: arti
+        env:
+          OPENSSL_DIR: /usr/lib/aarch64-linux-gnu
+          PKG_CONFIG_ALLOW_CROSS: 1
+          PKG_CONFIG_PATH: /usr/lib/aarch64-linux-gnu/pkgconfig
         run: cargo build -p arti --locked --release --target aarch64-unknown-linux-gnu
 
       # Upload ARM64 build artifact
