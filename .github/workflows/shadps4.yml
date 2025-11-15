@@ -1,54 +1,37 @@
-name: Build Zig Compiler for ARM64 Linux
+name: Build Arti
 
 on:
   workflow_dispatch:
-  
+
 jobs:
-  build-arm64:
-    # Note: Using standard ubuntu-latest (x86_64) runner for building, 
-    # which is the current configuration.
+  build:
     runs-on: ubuntu-latest
-    name: Build Zig Compiler
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        
-      - name: Install build dependencies
-        # FIX: Replaced the unavailable 'libllvm-dev' package.
-        # We now install the basic 'llvm' package and ensure we have all core tools 
-        # (clang, lld, cmake) which should pull in the necessary LLVM components 
-        # including the 'llvm-config' utility.
+      # Explicitly clone the external repository
+      - name: Clone arti repo
         run: |
-          sudo apt update
-          # Install core tools, including the main LLVM package for utilities.
-          sudo apt install -y build-essential clang lld git cmake llvm
+          git clone https://github.com/zydou/arti.git
+          cd arti
 
-      - name: Clone Zig repository
-        run: |
-          # Clone the official Zig repository
-          git clone --recursive https://github.com/ziglang/zig.git
-          
-      - name: Configure CMake
-        working-directory: zig
-        # Configure the build using CMake. Set Release build type.
-        # This step failed previously due to missing llvm-config, which should now be fixed.
-        run: cmake -S . -B build/ -DCMAKE_BUILD_TYPE=Release -DZIG_PREBUILT_BOOTSTRAP_NAME=self-hosted
+      # Set up Rust (version >= 1.86)
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.87.0
 
-      - name: Build project
-        working-directory: zig
-        # Run the build using all available CPU cores
-        run: cmake --build ./build --parallel $(nproc)
+      # Verify Rust version
+      - name: Check Rust version
+        run: rustc --version
 
-      - name: Verify build (Check Zig Version)
-        working-directory: zig/build/bin
-        run: |
-          echo "Verifying the compiled zig executable..."
-          ./zig version
+      # Build the project
+      - name: Build arti
+        working-directory: arti
+        run: cargo build -p arti --locked --release
 
-      - name: Upload build artifacts
+      # Upload build artifacts
+      - name: Upload arti binary
         uses: actions/upload-artifact@v4
         with:
-          name: zig-binaries-arm64-target
-          # The compiled executable and necessary libraries will be under zig/build/
-          path: zig/build/
+          name: arti-binary
+          path: arti/target/release/arti
