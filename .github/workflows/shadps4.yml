@@ -10,9 +10,7 @@ jobs:
     steps:
       # Explicitly clone the external repository
       - name: Clone arti repo
-        run: |
-          git clone https://github.com/zydou/arti.git
-          cd arti
+        run: git clone https://github.com/zydou/arti.git
 
       # Set up Rust (version >= 1.86)
       - name: Set up Rust
@@ -20,18 +18,26 @@ jobs:
         with:
           toolchain: 1.87.0
 
+      # Add ARM64 target
+      - name: Add ARM64 target
+        run: rustup target add aarch64-unknown-linux-gnu
+
+      # Install cross compiler toolchain
+      - name: Install cross compiler
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+
       # Verify Rust version
       - name: Check Rust version
         run: rustc --version
 
-      # Build the project
-      - name: Build arti
+      # Build the project for ARM64
+      - name: Build arti (ARM64)
         working-directory: arti
-        run: cargo build -p arti --locked --release
+        run: cargo build -p arti --locked --release --target aarch64-unknown-linux-gnu
 
-      # Upload build artifacts
-      - name: Upload arti binary
+      # Upload ARM64 build artifact
+      - name: Upload arti ARM64 binary
         uses: actions/upload-artifact@v4
         with:
-          name: arti-binary
-          path: arti/target/release/arti
+          name: arti-binary-arm64
+          path: arti/target/aarch64-unknown-linux-gnu/release/arti
